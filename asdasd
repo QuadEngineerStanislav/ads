@@ -1,0 +1,74 @@
+# Information: https://clover.coex.tech/programming
+import threading
+import time
+import math
+import rospy
+from clover import srv
+from std_srvs.srv import Trigger
+import math
+rospy.init_node('flight')
+
+get_telemetry = rospy.ServiceProxy('get_telemetry', srv.GetTelemetry)
+navigate = rospy.ServiceProxy('navigate', srv.Navigate)
+navigate_global = rospy.ServiceProxy('navigate_global', srv.NavigateGlobal)
+set_position = rospy.ServiceProxy('set_position', srv.SetPosition)
+set_velocity = rospy.ServiceProxy('set_velocity', srv.SetVelocity)
+set_attitude = rospy.ServiceProxy('set_attitude', srv.SetAttitude)
+set_rates = rospy.ServiceProxy('set_rates', srv.SetRates)
+land = rospy.ServiceProxy('land', Trigger)
+
+a = get_telemetry()
+time_f = False
+
+def navigate_wait(x=0, y=0, z=0, yaw=float('nan'), speed=0.5, frame_id='', auto$
+    navigate(x=x, y=y, z=z, yaw=yaw, speed=speed, frame_id=frame_id, auto_arm=a$
+
+    while not rospy.is_shutdown():
+        telem = get_telemetry(frame_id='navigate_target')
+        print(telem.x,telem.y,telem.z)
+        if math.sqrt(telem.x ** 2 + telem.y ** 2 + telem.z ** 2) < tolerance:
+            break
+        rospy.sleep(0.2)
+
+def timer():
+  global time_f
+  time_f = False
+  time.sleep(7)
+  time_f = True
+  print("land")
+
+navigate(x=0, y=0, z=2, frame_id='body', auto_arm=True)
+rospy.sleep(4)
+
+def wait():
+  global a
+  timee = threading.Thread(target=timer)
+  timee.start()
+  print("Wait")
+  a = get_telemetry()
+  while time_f == False:
+    navigate(x=0,y=0,z=2,frame_id='aruco_90')
+    #navigate(x=a.x, y=a.y, z=a.z, speed=1, frame_id='map')
+    print(get_telemetry().x,get_telemetry().y,get_telemetry().z)
+  a=get_telemetry()
+
+wait()
+a = get_telemetry()
+print("-->")
+
+navigate_wait(x=5, speed = 5, frame_id='navigate_target')
+navigate_wait(x=a.x,y=a.y,z=a.z,speed=1.5,frame_id='map')
+
+def land_pro(z):
+  navigate(z=z,speed=0.3,frame_id='aruco_90')
+  while get_telemetry().z > z:
+    print(get_telemetry().z)
+  land()
+
+wait()
+land_pro(0.2)
+
+
+
+
+
